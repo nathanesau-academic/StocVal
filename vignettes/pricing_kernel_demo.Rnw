@@ -1,0 +1,174 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage[margin=1.0in]{geometry}
+
+
+\title{Term structure model in \texttt{StocVal}}
+\author{Nathan Esau}
+\date{\today}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\section{Pricing Kernel}
+
+In the master thesis of C.C. Slagmolen, Economic Scenarios for an Asset and Liability Management
+Study of a Pension Fund (2010), a pricing kernel approach to generating a term structure of interest rates
+is presented.
+
+\subsection{Formulas}
+
+\medskip
+The pricing kernel is related to the state variable as 
+
+\begin{align}
+-m_{t+1} &= \delta_0 + \delta_1 z_t + 0.5 \lambda_t ' \lambda_t + \lambda_t' \epsilon_{t+1} \\
+\lambda_t &= \lambda_0 + \lambda_1 z_t
+\end{align}
+
+Later on they show that in fact
+
+\begin{align}
+B_{n+1}' &= -\delta_1 + B_n' \Phi - B_{n}' \lambda_1 \\
+A_{n+1} &= -\delta_0 + A_n + B_n'v - B_n'\Sigma\lambda_0 + 0.5 B_n'\Sigma\Sigma'B_n \\
+p_{t}^{(n)} &= A_n + B_n' z_t \\
+y_{t}^{(n)} &= -\frac{A_n}{n} - \frac{B_n'}{n} z_t 
+\end{align}
+
+where $y_{t}^{(n)}$ is the $(n)$ year continuous spot rate at time $t$ and $p_{t}^(n)$ 
+is the log bond price for an $n$-year nominal bond at time $t$.
+
+\medskip
+Essentially, all we need to estimate is $\Phi$, the VAR coefficients, $\Sigma$, the VAR
+covariance matrix, and we need to estimate $\Sigma \lambda_0$ and $\Sigma \lambda_1$ 
+for the pricing kernel, conditional on $\Sigma$ and $\Phi$.
+
+\medskip
+Calculating $\Sigma \lambda_0$ and $\Sigma \lambda_1$ is a bit tricky. This is done
+by minimizing the sum of squared errors between the fitted yields and the historical
+yields for 2, 3, 5, and 10 year bonds over the historical period (in this case over 20 years).
+In the end we need to estimate 11 unknown parameters. We can minimize the sum of squares
+using the \texttt{R optim} function.
+
+\subsection{Historical Fit}
+
+\medskip
+Below, the code to generate the model is shown and the fit with the historical term structure
+yields is plotted. For simplicity, a 4 component VAR containing the 1-month treasury bill yield,
+the inflation rate, the 10-year treasury bond yield and the stock index (described in more 
+detail in vignettes \texttt{var\_canada\_summary.pdf} and \texttt{data\_used.pdf}) was calibrated
+to historical data from 1995 to 2015.
+
+<<echo=TRUE>>=
+library(StocVal)
+marketData <- 
+  readRDS("~/Dropbox/Research/StocVal/data/Canada/varinput_canada.Rda")
+varData <- data.frame(onemonth=marketData$onemonth,
+  inflation=marketData$inflation, tenyear=marketData$tenyear,
+  stock=marketData$stock)
+histYields <- data.frame(twoyear=marketData$twoyear, 
+  threeyear=marketData$threeyear, fiveyear=marketData$fiveyear, 
+  tenyear=marketData$tenyear)
+mu <- matrix(c(mean(varData$onemonth), mean(varData$inflation),
+  mean(varData$tenyear), mean(varData$stock)), 4, 1)
+varData <- data.frame(onemonth=varData$onemonth - mu[1], 
+  inflation=varData$inflation - mu[2], tenyear=varData$tenyear-mu[3],
+  stock=varData$stock - mu[4])
+var_ols.out <- var_ols(varData)
+Phi <- var_ols.out$Phi
+Sigma <- var_ols.out$Sigma
+@
+
+The VAR components estimated under OLS, $\Phi$ and $\Sigma$ are shown below.
+
+<<echo=TRUE>>=
+print(Phi)
+print(Sigma)
+@
+
+Next, we calculate $\Sigma\lambda_0$ and $\Sigma\lambda_1$. Note that this
+requires minimizing a function of 11 variables, which can take several minutes.
+
+<<echo=TRUE>>=
+N <- c(2,3,5,10)
+varData <- data.frame(onemonth=marketData$onemonth,
+  inflation=marketData$inflation, tenyear=marketData$tenyear,
+  stock=marketData$stock)
+calibrate_VAR.out <- calibrate_VAR(varData, histYields, Phi, Sigma, N)
+print(calibrate_VAR.out$SigmaL0)
+print(calibrate_VAR.out$SigmaL1)
+@
+
+Next, we calculate the fitted historical yields, having solved for $\Sigma\lambda_0$
+and $\Sigma\lambda_1$. 
+
+<<echo=TRUE>>=
+SigmaL0 <- calibrate_VAR.out$SigmaL0
+SigmaL1 <- calibrate_VAR.out$SigmaL1 
+ncomponents <- length(Phi[,1]) # number of VAR components
+delta1 <- c(1,0,0,0) # 1 corresponds to 1 month short rate
+nrows <- length(varData[,1]) # varData and histYields are same length
+An <- c(0)
+Bnt <- matrix(rep(0,ncomponents),1,ncomponents)
+total <- 0
+nsum_index <- 1
+
+A <- function(An, Bnt, SigmaL0, Sigma) { # An
+  An - Bnt %*% SigmaL0 + 0.5 * Bnt %*% Sigma %*% t(Sigma) %*% t(Bnt)
+}
+
+B <- function(Bnt, Phi, delta1, SigmaL1) { # Bnt
+  -delta1 + Bnt %*% Phi - Bnt %*% SigmaL1 
+}
+
+fittedYields <- vector("list", ncomponents)
+for(n in 1:(max(N))) {
+  An <- A(An, Bnt, SigmaL0, Sigma)
+  Bnt <- B(Bnt, Phi, delta1, SigmaL1)
+  if(is.element(n,N)) { # loop over t
+    fittedYields[[nsum_index]] <- numeric(nrows)
+    yields <- histYields[,nsum_index]
+    for(t in 1:nrows) {
+      zt <- matrix(as.numeric(varData[t,]), ncomponents, 1)
+      pt <- An + Bnt %*% zt
+      yt_fit <- -pt/n # fitted yield
+      fittedYields[[nsum_index]][t] <- yt_fit
+    }
+    nsum_index <- nsum_index + 1 # next column of histYields
+  }
+}
+@
+
+The plots are shown below comparing the historical yields (in blue)
+with the fitted yields (in red) for 2, 3, 5 and 10 year bonds.
+
+<<echo=TRUE, fig=TRUE>>=
+plot(ts(histYields[[1]], start=1995, end=2015, freq=12), ylab="2-year", 
+  type='l', col='blue', main="2-year historical yield fit")
+lines(ts(fittedYields[[1]], start=1995, end=2015, freq=12), type='l', col='red')
+@
+
+<<echo=TRUE, fig=TRUE>>=
+plot(ts(histYields[[2]], start=1995, end=2015, freq=12), ylab="3-year", 
+  type='l', col='blue', main="3-year historical yield fit")
+lines(ts(fittedYields[[2]], start=1995, end=2015, freq=12), type='l', col='red')
+@
+
+<<echo=TRUE, fig=TRUE>>=
+plot(ts(histYields[[3]], start=1995, end=2015, freq=12), ylab="5-year", 
+  type='l', col='blue', main="5-year historical yield fit")
+lines(ts(fittedYields[[3]], start=1995, end=2015, freq=12), type='l', col='red')
+@
+
+<<echo=TRUE, fig=TRUE>>=
+plot(ts(histYields[[4]], start=1995, end=2015, freq=12), ylab="10-year", 
+  type='l', col='blue', main="10-year historical yield fit")
+lines(ts(fittedYields[[4]], start=1995, end=2015, freq=12), type='l', col='red')
+@
+
+\end{document}

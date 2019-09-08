@@ -1,0 +1,297 @@
+#' @title DATA: Phi (VAR with 4 components)
+#' @description Coefficient parameter for VAR model
+#' @format A 4x4 matrix
+#' @export
+Phi <- matrix(c(0.98646375925234064396818, -0.001155121520376639837960, 
+  0.002799416915904818885241, 0.0001222492802557096996073,
+  0.37859226012123126103859, 0.867739718802214343718049, 
+  -0.120277410036094933865058, 0.0050566610739961681889043,
+  0.01830546350831605342813, -0.002045783125537823862738, 
+  0.968439896429265978383683, -0.0001873243669420995329011,
+  -0.67978829586780487037601, -0.738696383822652791195651, 
+  2.939772603776247716922398, 0.1584992164928959168523903),
+  4,4, byrow=TRUE)
+
+#' @title DATA: Sigma (VAR with 4 components)
+#' @description Covariance parameter for VAR model
+#' @format A 4x4 matrix
+#' @export
+Sigma <- matrix(c(2.859136766328564886858e-08, 8.211634074785336457129e-08, 
+  3.674473333599782260494e-09, 2.444750541772141498244e-07,
+  8.211634074785336457129e-08, 1.688483023902802217936e-05, 
+  4.320068273471919291023e-08, -1.798383277868851134627e-05,
+  3.674473333599782260494e-09, 4.320068273471919291023e-08, 
+  2.258990787345239713757e-08, 3.651184753296157279260e-07,
+  2.444750541772141498244e-07, -1.798383277868851134627e-05, 
+  3.651184753296157279260e-07, 1.872009664688948412520e-03), 
+  4, 4, byrow=TRUE)  
+
+#' @title DATA: mu (VAR with 4 components)
+#' @description Historical means of VAR components
+#' @format A 4x1 matrix
+#' @export 
+mu <- matrix(c(0.002305719110204081448434, 0.018206346253061223006142, 
+               0.003660958820408163026661, 0.005253705832653061090498), 4, 1)
+
+#' @title DATA: lambda0 (VAR with 4 components)
+#' @description Parameter for pricing kernel. SigmaL0 was estimated and L0 was calculated
+#'  by solve(Sigma) %*% SigmaL0 = L0 since solve(Sigma) %*% SigmaL0 = diag(4), the identity
+#'  matrix.
+#' @format a 4x1 matrix 
+#' @export 
+L0 <- matrix(c(-55178.05599620680004591122, -216.53153423505398222915, 
+  199745.53266161269857548177, 24.57902854678528825616), 
+  4, 1, TRUE)
+
+#' @title DATA: lambda1 (VAR with 4 components)
+#' @description Parameter for pricing kernel. SigmaL1 was estimated and L1 was calculated
+#'  by solve(Sigma) %*% SigmaL1 = L1 since solve(Sigma) %*% SigmaL1 = diag(4)l, the identity
+#'  matrix
+#' @format a 4x1 matrix
+#' @export .
+L1 <- matrix(c(1026898.151495224097743630, 628447.9705683841602876782, 
+  -524094.712365058250725269, -63982.04126765477121807635,
+  -15029.389825974876657710, 5073.6195163797283385065, 
+  8427.325257368067468633, 53.72216741197105704941,
+  3380659.188922780100256205, -3103710.0013902252539992332, 
+  -1462886.032591008814051747, 129079.61690325138624757528,
+  -1300.990312760138067461, 177.4182897279056305706, 
+  2005.108778965692181373, 68.36396706041517745689),
+  4, 4, byrow=TRUE)
+
+#' @title DATA: initial VAR values, z0 (VAR with 4 components)
+#' @description Parameter for VAR scenario generation. Note that means have been subtracted.
+#' @format a 4x1 matrix
+#' @export 
+z0 <- matrix(c(-0.00179459811020408143388, -0.01026979625306122245743, 
+  -0.00221392582040816311359, -0.03642568083265305955987),
+  4, 1)
+
+#' @title DATA: VAR parameters (4 components)
+#' @description List containing Phi, Sigma, L0 and L1, z0
+#' @format A list with 5 elements
+#' @export 
+var_params <- list(Phi=Phi, Sigma=Sigma, L0=L0, L1=L1, z0=z0, mu=mu)
+
+
+#' @title DATA: Term Structure rates
+#' @description Risk free interest rates 
+#' @format A data frame with 12 rows and 2 variables
+#' @export 
+termStruct <- data.frame(term=c(1,2,3,4,5,7,8,9,10,15,20,30),
+  RFR=c(0.003039, 0.006425, 0.010487, 0.015358, 0.02033, 
+  0.027362, 0.029422, 0.03171, 0.034151, 0.040815, 
+  0.042166, 0.043495))
+
+#' @title DATA: Demographic Info for Plan
+#' @description Employee salaries, ages and account values
+#' @format A data frame with 5 rows and 7 columns
+#' @export
+demoInfo <- data.frame(employee_id = c(1,2,3,4,5),
+  age_entry = c(25,30,30,25,25), 
+  age_valuation = c(45,40,30,50,60),
+  gender = c("M", "M", "F", "F", "M"),
+  current_salary = c(100000, 80000, 65000, 150000, 100000),
+  account_value = c(120000, 50000, 0, 200000, 20000),
+  remaining = c(20, 25, 30, 15, 5))
+
+#' @title DATA: Mortality Info for Plan
+#' @description qxm and qxf for age 0 to 110 inclusive
+#' @format A data frame with 111 rows and 3 columns
+#' @export 
+mortalityInfo <- data.frame(age = seq(0, 110, 1),
+  qxm = c(0.00573, 0.00097, 0.00075, 0.00058, 0.00047, 
+          0.00039, 0.00035, 0.00033, 0.00032, 0.00031,
+          0.00030, 0.00029, 0.00030, 0.00038, 0.00053,
+          0.00075, 0.00102, 0.00126, 0.00129, 0.00131, 
+          0.00131, 0.00132, 0.00131, 0.00131, 0.00130,
+          0.00130, 0.00130, 0.00131, 0.00132, 0.00135, 
+          0.00139, 0.00145, 0.00153, 0.00163, 0.00175,
+          0.00189, 0.00204, 0.00220, 0.00237, 0.00256, 
+          0.00276, 0.00298, 0.00322, 0.00348, 0.00377,
+          0.00408, 0.00442, 0.00478, 0.00518, 0.00560,
+          0.00606, 0.00656, 0.00711, 0.00771, 0.00838, 
+          0.00912, 0.00994, 0.01084, 0.01184, 0.01294,
+          0.01416, 0.01549, 0.01694, 0.01853, 0.02026, 
+          0.02216, 0.02423, 0.02631, 0.02899, 0.03172,
+          0.03470, 0.03796, 0.04154, 0.04544, 0.04970,
+          0.05436, 0.05946, 0.06502, 0.07108, 0.07769,
+          0.08489, 0.09273, 0.10127, 0.11054, 0.12061,
+          0.13154, 0.14338, 0.15619, 0.17003, 0.18497,
+          0.20106, 0.21835, 0.23691, 0.25678, 0.27800,
+          0.30059, 0.32456, 0.34994, 0.37672, 0.40482,
+          0.43412, 0.46452, 0.49591, 0.52818, 0.56123,
+          0.59497, 0.62931, 0.66415, 0.69808, 0.73818,
+          1),
+  qxf = c(0.00524, 0.00090, 0.00062, 0.00044, 0.00033,
+          0.00028, 0.00025, 0.00022, 0.00021, 0.00019,
+          0.00019, 0.00019, 0.00022, 0.00025, 0.00030,
+          0.00034, 0.00039, 0.00043, 0.00048, 0.00051,
+          0.00053, 0.00054, 0.00053, 0.00053, 0.00052,
+          0.00051, 0.00050, 0.00051, 0.00053, 0.00056,
+          0.00059, 0.00064, 0.00069, 0.00074, 0.00080,
+          0.00087, 0.00093, 0.00100, 0.00107, 0.00115,
+          0.00124, 0.00134, 0.00145, 0.00157, 0.00171, 
+          0.00187, 0.00205, 0.00226, 0.00249, 0.00275,
+          0.00302, 0.00329, 0.00357, 0.00385, 0.00414,
+          0.00447, 0.00486, 0.00533, 0.00590, 0.00655,
+          0.00729, 0.00810, 0.00897, 0.00988, 0.01087,
+          0.01194, 0.01313, 0.01445, 0.01593, 0.01759,
+          0.01943, 0.02148, 0.02375, 0.02625, 0.02902, 
+          0.03208, 0.03547, 0.03921, 0.04334, 0.04790,
+          0.05293, 0.05849, 0.06461, 0.07136, 0.07878,
+          0.08695, 0.09593, 0.10578, 0.11659, 0.12842,
+          0.14136, 0.15550, 0.17091, 0.18768, 0.20589,
+          0.22560, 0.24689, 0.26983, 0.29448, 0.32081,
+          0.34877, 0.37832, 0.40941, 0.44199, 0.47603, 
+          0.51150, 0.54837, 0.58661, 0.62456, 0.66259, 
+          1))
+
+#' @title DATA: Hull White Input parameters
+#' @description 1D vector containing b, tau, scenarios, projyears, 
+#'  seed for hull white short rate scenario generation
+#' @format 1D vector with 5 entries
+#' @export 
+srinput <- c(0.951660319456652, 0.011580778865257, 1000, 
+  100, 1375310)
+
+#' @title DATA: NS_params
+#' @description Parameters for the Neilson and Siegel extrapolation containing
+#'  m, B0, B1, B2, tau1, tau2
+#' @format 1D vector with 6 entries
+#' @details The first entry (m) represents the time to maturity
+#' @export 
+NS_params <- c(3, 0.0514, -0.148481023014662, -0.041408305542264, 
+  0.316417, 5.395767)
+
+#' @title DATA: Credit Rating Spread Input parameters
+#' @description 1D vector containing b, tau, scenarios, projyears,
+#'  seed for hull white short rates scenario generation
+#' @format 1D vector with 5 entries
+#' @export
+crspinput <- c(0.9000, 0.0050,1000,
+  100,137510)
+
+#' @title DATA: Excess Equity Input parameters
+#' @description 1D vector containing risk premium (0 since risk neutral),
+#'  # of scenarios, projection years, random number seed 
+#' @format 1D vector with 4 entries
+#' @export
+rpi <- c(0, 1000,
+  100, 1375310)
+
+#' @title DATA: Inputs for inflation scenario generation
+#' @description 1D vector containing # of scenarios, projection years,
+#'  and random number seed
+#' @format 1D vector with 3 entries
+#' @export 
+inflation_in <- c(1000,100,1375310)
+
+#' @title DATA: Inflation mean by term 
+#' @description 1D vector containing expected inflation for each term
+#' @format 1D vector with 100 etnries
+#' @export 
+inflation_mean <- rep(0.0230, 100)
+
+#' @title DATA: Volatility by term of bond
+#' @description Volatility for bonds with terms 1 to 100 length inclusive
+#' @format 1D vector with 100 entries
+#' @export
+volterm.equity <- c(0.23448081263019, 0.24392789357641, 0.255081468687934,
+  rep(0.255215640695138, 97))
+
+#' @title DATA: Volatility by term from inflation
+#' @description Volatility for inflation for term 1 to 100 inclusive
+#' @format 1D vector with 100 entries
+#' @export 
+volterm.inflation <- c(0.019313480347594, 0.0317910589971793, 0.0443799194052915,
+  0.05694938874535504, 0.0686078555018093, 0.081821503509611,
+  0.0950351515174127, 0.108248799525214, 0.121462447533016, 
+  rep(0.134676095540818,91))
+
+#' @title DATA: Plan Features and Assumptions
+#' @description DB plan parameters used for modeling
+#' @format List with 5 entries: expected salary growth rate, 
+#'  contribution rate, vesting period, cash balance plan floor, 
+#'  volatility on treasury bond, maximum retirement age
+#' @export 
+planVariables <- list(s=0.04, CR=0.05, vesting=3, 
+    floor=0.04, vol=0.019)
+
+#' @title DATA: ESG scenario generation input
+#' @description Input parameters for ESG scenario generation containing
+#'  Interest Rate - b, Interest Rate - tau, Equity Risk premium (0 since risk neutral),
+#'  Credit Spread - b, Credit Spread - tau, # of scenarios, projection years,
+#'  random number seed
+#' @format 1D vector with 8 elements
+#' @details Interest Rate - b is from srinput;
+#'  Interest Rate - tau is from srinput;
+#'  Equity Risk Premium is from rpi;
+#'  Credit Spread - b is from crspinput;
+#'  Credit Spread - tau is from crspinput;
+#'  # of scenarios is from srinput;
+#'  projection years is from srinput;
+#'  Random number seed is from srinput
+#' @export
+esgin <- c(0.951660319456652, 0.011580778865257, 0, 
+  0.900, 0.005, 1000, 100, 137531)
+
+#' @title DATA: cholesky correlation matrix
+#' @description Contains 4x4 correlation matrix for short rate, credit spread,
+#'  excess return and inflation rate
+#' @format 4x4 matrix
+#' @export 
+cholinput <- matrix(c(1.000,-0.226739420331327, 0.204, 0.312225859466568,
+  -0.226739420331327, 1.000, -0.167796134854444, -0.00696905065455965, 
+  0.204, -0.167796134854444, 1.000, -0.210583578966775,
+  0.312225859466568, -0.00696905065455965, -0.210583578966775, 1.000), byrow=TRUE,
+  nrow=4, ncol=4)
+
+#' @title DATA: 10-year deterministic yields
+#' @description output of determScenario() -> term10
+#' @format 1D vector with 100 entries corresponding to time 0-99
+#' @export
+term10 <- c(0.0341510000000000, 0.0396016081883348, 0.0442671272632218, 0.0478831430238005, 0.0501581072603567,
+            0.0512112155382398, 0.0516417108441591, 0.0518995485091558, 0.0521213548865072, 0.0515601778422505,
+            0.0502431188056676, 0.0487358423571516, 0.0472638612878795, 0.0459193099644588, 0.0447784180240183,
+            0.0439017893420990, 0.0433450260373078, 0.0431952689014603, 0.0435491457341983, 0.0445039623957859, 
+            0.0461580864980835, 0.0471312911166750, 0.0481986792224602, 0.0493089500698591, 0.0504051868682192,
+            0.0514206313607020, 0.0522786587300841, 0.0528928344904709, 0.0531670820207359, 0.0529959919937997,
+            0.0522653069258896, 0.0523379684361234, 0.0523968661761591, 0.0524474545153464, 0.0524908591142836,
+            0.0525280626222162, 0.0525599208393250, 0.0525871775053794, 0.0526104777166367, 0.0526303800115706,
+            0.0526473671915961, 0.0526618559586831, 0.0526742054603164, 0.0526847248355184, 0.0526936798552600,
+            0.0527012987476172, 0.0527077772933999, 0.0527132832723129, 0.0527179603335257, 0.0527219313581209,
+            0.0527253013745372, 0.0527281600820122, 0.0527305840312000, 0.0527326385057159, 0.0527343791434129,
+            0.0527358533315549, 0.0527371014060256, 0.0527381576809132, 0.0527390513315571, 0.0527398071511576,
+            0.0527404461984695, 0.0527409863517658, 0.0527414427822408, 0.0527418283582772, 0.0527421539903934,
+            0.0527424289253986, 0.0527426609970423, 0.0527428568394832, 0.0527430220689606, 0.0527431614383482,
+            0.0527432789685260, 0.0527433780600286, 0.0527434615878593, 0.0527435319819796, 0.0527435912956085,
+            0.0527436412631450, 0.0527436833492791, 0.0527437187906064, 0.0527437486308917, 0.0527437737509109,
+            0.0527437948937379, 0.0527438126861175, 0.0527438276565639, 0.0527438402506584, 0.0527438508439853,
+            0.0527438597530605, 0.0527438672445648, 0.0527438735431607, 0.0527438788380572, 0.0527438832885911,
+            0.0527438870289125, NA, NA, NA, NA, NA, NA, NA, NA, NA)
+
+#' @title DATA: 1-year deterministic yields
+#' @description output of determScenario() -> term1
+#' @format 1D vector with 100 entries corresponding to time 0-99
+#' @export
+term1 <- c( 0.00303900000000001, 0.00982243025944141, 0.0186602496971922, 0.0301123357019759, 0.0404626637864398, 
+            0.0450914851811279,   0.0452180390511281,  0.0439581211917899, 0.0501980242468023, 0.0563815370437415, 
+            0.0571769454263846,   0.0560674477389353,  0.0544884575661424, 0.0526959263132869, 0.0509437301453599, 
+            0.0493792723638236,   0.0477834955571939,  0.046161529423919,  0.0446099380193765, 0.0432248835100726, 
+            0.0421022812600576,   0.0413380044683236,  0.041028138906702,  0.0412692885505159, 0.0421589331415197, 
+            0.0437958389744895,   0.0462805244553717,  0.0497157822388747, 0.0542072600148162, 0.0598641022723863, 
+            0.0518372808220722,   0.0520016553089782,  0.0521076032873549, 0.0521989490940133, 0.052277600650507, 
+            0.0523452383562633,   0.0524033374442165,  0.0524531892875466, 0.0524959213724818, 0.052532515778215, 
+            0.0525638260970964,   0.0525905927934938,  0.0526134570448904, 0.0526329731389998, 0.0526496195189228, 
+            0.0526638085787599,   0.0526758953162674,  0.0526861849486715, 0.0526949395946952, 0.0527023841208165, 
+            0.0527087112430187,   0.0527140859688386,  0.052718649456581,  0.0527225223619419, 0.0527258077349473, 
+            0.0527285935234945,   0.0527309547337582,  0.0527329552919242, 0.0527346496463315, 0.0527360841446913, 
+            0.0527372982165859,   0.052738325387808,   0.0527391941492519, 0.052739928701159,  0.0527405495892359, 
+            0.0527410742487155,   0.0527415174686534,  0.0527418917883369, 0.0527422078351527, 0.0527424746126679, 
+            0.0527426997458693,   0.0527428896899256,  0.0527430499077357, 0.0527431850209765, 0.0527432989383303, 
+            0.0527433949644682,   0.052743475892574,   0.0527435440827644, 0.0527436015287805, 0.0527436499142693, 
+            0.0527436906607706,   0.0527437249681424,  0.0527437538488742, 0.0527437781572204, 0.0527437986136652, 
+            0.0527438158257856,   0.052743830305829,   0.0527438424856068, 0.0527438527289652, 0.0527438613425335, 
+            0.0527438685845623,   0.0527438746726034,  0.0527438797898183, 0.0527438840904872, 0.0527438877044162, 
+            0.0527438907408282,   0.0527438932917879,  0.0527438954345716, 0.0527438972343046, 0.0527438987457451)

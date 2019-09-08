@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1.0in]{geometry}
+\usepackage{amsmath}
+
+\usepackage{Sweave}
+\begin{document}
+\input{data_used-concordance}
+
+\section{Data used (Canada)}
+
+\subsection{Yield rates}
+Statistics Canada's socio-economic database CANSIM provides Bank of Canada
+Benchmark Bond Yields and Canadian treasury bill yields. These were given on a
+daily basis - the earliest reference data avaiable was 199501 and the latest
+reference data available was 201506. To be consistent with the inflation
+reference dates, only data until 201505 was used. The vectors used were \textbf{V39051,
+V39052, V39053, V39054, V39055, V39063, V39067}.
+
+\medskip
+The following steps were taken to obtain monthly data. 
+\begin{enumerate}
+	\item All rows where the yield was \texttt{NA} or \texttt{0.00} were
+		removed.
+	\item The average yield over a month was calculated using the daily data
+		available (note that information for every day was not available in a
+		given month).
+\end{enumerate}
+
+For treasury bills (1 month, 1 year), let $y$ represent the yield rate. The
+yield rate is quoted under simple interest. Therefore, the return on the
+treasury bill is $yt$ where $t$ is the length of the treasury bill, and the
+price is $1 / (1+yt)$.
+
+\medskip
+For government of Canada bonds (2 year, 3 year, 5 year, 7 year, 10 year), the yield rate is compounded semi-annually. Let
+$i^{(2)}$ represent the yield rate. The effective annual rate is $i = (1+
+i^{(2)}/2)^2 - 1$ and the
+price is $v^{n}$ where $v = 1/(1+i)^n$
+
+\medskip
+Each yield rate was converted to a continuously compounded rate. For the treasury
+bills, let $i$ represent the effective annual yield rate under compound
+interest. Then $i = (1+yt)^{(1/t)} - 1$ where $y$ is the yield rate under simple
+interest. The force of interest is $\delta = \ln(1+i)$. For the government of
+Canada bonds, the force of interest is $\delta = \ln(1+i)$. We want the
+continuous rate over a monthly interval not over a yearly interval, so each of
+the force of interest terms were divided by 12.
+
+\subsection{Stock index}
+From yahoo finance, we can get the monthly stock prices for the index
+\texttt{S\&P/TSX} which accounts for 95\% of the Canadian equities market. To
+calculate the stock return over a monthly interval we take $\alpha_{1/12} = S_{1/12} / S_{0}$
+then $\alpha_{2/12} = S_{2/12} / S_{1/12}$ and so on. Then the force of interest
+over a monthly interval is $\delta = \ln(1+\alpha_i)$. 
+
+\medskip
+The earliest reference date used was 199501 so that the dates lined up with the
+yield rates. Dividends were not modeled, only the stock index. However,
+reference dates are available into the 1970s.
+
+\subsection{Inflation}
+The Canadian consumer price index is also available from CANSIM. The vector used
+was \textbf{V41755375}, which provides the CPI from 198401 onwards until
+201505. To be consistent with the yield rate reference dates only data from
+199501 onwards was used.
+
+The inflation rate over a month was calculated by dividing the CPI over the CPI
+of the previous month and subtracting 1. The continuously compounded inflation
+rate over the month was calculated by taking $\ln(1+\pi)$ where $\pi$ is the
+inflation rate over the month.
+
+\subsection{Salary}
+The seasonally adjusted annual salary rates are also available from CANSIM. The
+	vector used was \textbf{V62468795}. However, the data frequency available is
+	quarterly, so currently salary is not being included in the model. Monthly data
+    is only available from 2001 onwards from the survey of employment, payrolls and hours (SEPH).
+
+\end{document}

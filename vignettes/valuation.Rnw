@@ -1,0 +1,197 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1.0in]{geometry}
+
+\title{Valuing cash balance plans embedded options in \texttt{StocVal}}
+\author{Nathan Esau}
+\date{\today}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+The default plan consists of the following five employees.
+
+<<echo=TRUE>>=
+library(StocVal)
+print(demoInfo, row.names=F)
+@
+
+To demonstrate the various functions, employee 5 will be used. A summary
+of the embedded option costs for all of the employees will be shown at the end.
+
+\medskip
+The survival probabilities used (mortality) are plotted below. The female 
+mortality is shown in blue. Note that these probabilities are actually discrete (the
+line joining the points may be deceiving.
+
+<<echo=TRUE, fig=TRUE>>=
+tpxm <- cumprod(1 - mortalityInfo$qxm)
+tpxf <- cumprod(1 - mortalityInfo$qxf)
+plot(x=seq(0, 110, 1), y=tpxm, xlab="Age", ylab="tpx", 
+  main="Survival Probability", type='l', col='red')
+lines(x=seq(0,110,1), y=tpxf, xlab="Age", ylab="tpx", col='blue', type='l')
+@
+
+For employee 5, the relevant decrements are shown below (note that 
+the termination rate refers to the probability of employee 5 retiring early
+in that year).
+<<echo=TRUE>>=
+employee <- demoInfo[5,]
+surviveInfo.out <- surviveInfo(employee)
+print(surviveInfo.out, row.names=F)
+@
+
+First, the deterministic scenario will be shown. Here we will be using 
+the interest rate yields with term length 1 and 10 (these are the output
+of \texttt{determScenario()}). 
+
+\medskip
+First, these short rate yields are shown.
+<<echo=TRUE>>=
+print(term1)
+print(term10)
+@
+
+The embedded options that we will be valuing is a floor on the minimum
+return obtained by the employee in a given year. The value of this floor 
+and some other plan assumptions, such as the volatility of a long-term treasury
+bond, a vesting period and a fixed contribution rate are shown below.
+<<echo=TRUE>>=
+planVariablesDF <- data.frame(variable=c("salary_scale", "contrib_rate", 
+  "vesting", "floor", "vol"), value=c(planVariables[[1]], planVariables[[2]],
+  planVariables[[3]], planVariables[[4]], planVariables[[5]]))
+print(planVariablesDF, row.names=F)
+@
+
+The account value with and without a floor for employee 5 are shown below.
+<<echo=TRUE>>=
+accountValueNF.out <- accountValueNF(employee, surviveInfo.out)
+print(accountValueNF.out, row.names=F)
+accountValueWF.out <- accountValueWF(employee, surviveInfo.out)
+print(accountValueWF.out, row.names=F)
+@
+
+We can then calculate the value of our embedded option which provides 
+a floor on the minimum return obtained by employee 5 under the deterministic 
+scenario.
+<<echo=TRUE>>=
+floorOption.cost <- floorOption(accountValueNF.out, accountValueWF.out)
+print(floorOption.cost, row.names=F)
+@
+
+There is an alternative way of valuing this option which uses an adapted version
+of the black scholes formula. I have referred to it as \texttt{floorOptionPBO()}
+since the price of the option equals to the sum of the PBO column, not the difference
+between the benefit with and without the option.
+
+<<echo=TRUE>>=
+floorOptionPBO.cost <- floorOptionPBO(demoInfo[5,], accountValueNF.out, 
+  accountValueWF.out, surviveInfo.out)
+print(floorOptionPBO.cost, row.names=F)
+@
+
+Under the deterministic scenario, the cost of this option for each 
+member of the pension plan are shown below. Totals are shown in the 
+bottom row.
+
+<<echo=TRUE>>=
+planSummaryDeterm.out <- planSummaryDeterm(demoInfo,planVariables)
+print(planSummaryDeterm.out, row.names=F)
+@
+
+For the stochastic scenario, we use different yields than under
+the deterministic scenario. For instance, the first stochastic scenario
+and the results for employee 5 are shown below. \footnote{To match the results of the
+SOA excel sheets replace \texttt{stochasticScenarios.out} with \texttt{stochasticScenarios.out <- bmarkScenarios(file)}.
+For more information see the \texttt{benchmarkDemo}.}
+
+<<echo=TRUE>>=
+termStruct.out <- cubic_spline(termStruct);
+termStruct.extension <- curve_extensionNS(termStruct.out);
+credit_spread <- rep(0.01,100);
+hw.out <- hull_white(srinput, termStruct.extension, termofyield=1);
+cholesky.out <- cholesky(cholinput);
+esga.out <- esga(esgin, credit_spread, volterm.equity, inflation_mean,
+volterm.inflation , cholesky.out, termStruct.extension);
+stochasticScenarios.out <- stochasticScenarios(hw.out, termStruct.extension,
+srinput, esga.out)
+term1 <- as.numeric(stochasticScenarios.out$term1[1,])
+term10 <- as.numeric(stochasticScenarios.out$term10[1,])
+print(term1)
+print(term10)
+accountValueNF.out <- accountValueNF(employee, surviveInfo.out, 
+  oneyear=term1, tenyear=term10)
+accountValueWF.out <- accountValueWF(employee, surviveInfo.out,
+  oneyear=term1, tenyear=term10)
+floorOption.cost <- floorOption(accountValueNF.out, accountValueWF.out,
+  oneyear=term1, tenyear=term10)
+floorOptionPBO.cost <- floorOptionPBO(employee, accountValueNF.out,
+  accountValueWF.out, surviveInfo.out, oneyear=term1, tenyear=term10)
+print(floorOption.cost)
+print(floorOptionPBO.cost)
+@
+.
+We can calculate the option costs for each scenario, plots these costs, and calculate
+the mean, expected value of these option costs 
+(for employee 5). First, we use the first method of valuing the option.
+<<echo=TRUE, fig=TRUE>>=
+stocfloorOption.cost <- stocfloorOption(employee, surviveInfo.out, 
+  stochasticScenarios.out)
+print(stocfloorOption.cost$mean_cost)
+print(stocfloorOption.cost$var_cost)
+hist(stocfloorOption.cost$costs, main="Distribution of benefit option costs",
+  ylab="Frequency", xlab="Floor option cost")
+@
+
+Next, we show the other method of valuing this option.
+
+<<echo=TRUE, fig=TRUE>>=
+stocfloorOptionPBO.cost <- stocfloorOptionPBO(employee, surviveInfo.out,
+  stochasticScenarios.out)
+print(stocfloorOptionPBO.cost$mean_cost)
+print(stocfloorOptionPBO.cost$var_cost)
+hist(stocfloorOptionPBO.cost$costs, main="Distribution of guarantee option 
+  costs", ylab="Frequency", xlab="Benefit option cost")
+@
+
+Finally, we show the cost of these options for the entire plan.
+
+<<echo=TRUE, fig=TRUE>>=
+planSummaryStoc.out <- planSummaryStoc(demoInfo, stochasticScenarios.out,
+  planVariables)
+print(planSummaryStoc.out$planSummary, row.names=F)
+hist(planSummaryStoc.out$floor_option_costs, main="Distribution of total
+  floor option costs", ylab="Frequency", xlab="Floor option cost")
+@
+
+<<echo=TRUE, fig=TRUE>>=
+hist(planSummaryStoc.out$floor_option_costs_pbo, main="Distribution of total
+  floor option costs (PBO)", ylab="Frequency", xlab="Floor option cost")
+@
+
+Note that the total cost of the option under the deterministic scenario (2,507) was much less that the total cost of the option under the stochastic scenario ($> 30,000$). This difference is refered to as the time value of financial options and guarantees (TVFOG) and represents the additional option cost caused by market volatility around the baseline projection.
+
+Finally, we can compare the deterministic scenario yield curve to the mean stochastic scenario yield curve. Notice that the determinstic scenario yields are much lower than most of the stochastic scenario yields.
+
+<<echo=TRUE, fig=TRUE>>=
+determScenario.out <- determScenario(termStruct.out)
+deterterm1 <- determScenario.out$term1
+deterterm10 <- determScenario.out$term10
+stochasticterm1.mean <- meanScenarios(stochasticScenarios.out$term1)
+stochasticterm10.mean <- meanScenarios(stochasticScenarios.out$term10)
+plot(x=seq(0,96,1), y=stochasticterm1.mean[1:97],
+  main="Mean stochastic scenario vs determ. scenario", type='l', col='blue',
+  xlab="time", ylab="term1")
+lines(x=seq(0,96,1), y=deterterm1[1:97], type='l')
+@
+
+<<echo=TRUE, fig=TRUE>>=
+plot(x=seq(0,87,1), y=stochasticterm10.mean[1:88], 
+  main="Mean stochastic scenario vs determ. scenario", type='l', col='blue',
+  xlab="time", ylab="term10")
+lines(x=seq(0,96,1), y=deterterm1[1:97], type='l')
+@
+
+\end{document}

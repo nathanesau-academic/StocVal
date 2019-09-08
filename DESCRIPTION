@@ -1,0 +1,10 @@
+Package: StocVal
+Title: Values embedded options in DB pension plan.
+Version: 0.0.1
+Authors@R: person("Nathan", "Esau", email = "nesau@sfu.ca", role = c("aut", "cre"))
+Description: Generates stochastic scenarios and values embedded options in DB pension plan. Based on 
+    SOA research study: https://www.soa.org/research/research-projects/pension/research-catalogue-survey.aspx
+Depends: R (>= 3.0.1)
+Suggests: MASS, vars
+License: GPL2
+LazyData: true

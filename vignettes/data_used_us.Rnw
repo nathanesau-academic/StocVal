@@ -1,0 +1,30 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage[margin=1.0in]{geometry}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section{Data Used (US)}
+
+For all data the earliest reference data used was 198703 and the latest
+reference date used was 201503. 
+
+\subsection{Yield rates}
+The US federal reserve provides yield rates on bond data. The one and ten year
+bond yields were used. These are provided as $i^{(2)}$ from which an effective
+annual rate $i$ is calculated and a force of interest $\delta$ is calculated.
+The quarterly force of interest is $\delta/4$.
+
+\subsection{Stock index}
+The SP500 was used from Yahoo finance (index $\wedge$GRSP). Suppose we know the stock price
+at 198610, 198611, 198612, 198701, 198702, 198703, 198704 (start of month) and we want the return over the quarter 1 of 1987. Intuitively, If you bought a stock at 198701 (start of month) and sold it at 198704 (start of month) then you would have made a profit (negative or positive) of $S_{1987-04} - S_{1987-01}$ and your return over quarter 1 would be $\alpha = S_{1987-04}/S_{1987-01} - 1$ implying a continuously compounded return over the quarter of $\delta = \ln(1+\alpha)$.
+
+\subsection{Inflation}
+U.S. inflation information was obtained from the misery index at miseryindex.us.
+
+\subsection{Salary}
+Salary information was obtained from the U.S. department of commerce (Bureau of Economic Analysis) at bea.gov - per capita GDP was used.
+
+\end{document}
